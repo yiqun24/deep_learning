@@ -127,3 +127,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+my_gcn/.DS_Store
+my_gcn/GNN/.DS_Store
+my_gcn/dataset/.DS_Store
+my_gcn/data/.DS_Store
