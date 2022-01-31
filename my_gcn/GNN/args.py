@@ -7,7 +7,7 @@ def get_args():
     parser.add_argument('--no-cuda', action='store_true', default=False,
                         help='Disables CUDA training.')
     parser.add_argument('--seed', type=int, default=66, help='Random seed.')
-    parser.add_argument('--epochs', type=int, default=100,
+    parser.add_argument('--epochs', type=int, default=200,
                         help='Number of epochs to train.')
     parser.add_argument('--tuned', action='store_true', help='use tuned hyperparams')
     parser.add_argument('--lr', type=float, default=0.01,
