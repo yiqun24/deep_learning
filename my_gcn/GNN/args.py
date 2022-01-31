@@ -6,7 +6,7 @@ def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--no-cuda', action='store_true', default=False,
                         help='Disables CUDA training.')
-    parser.add_argument('--seed', type=int, default=66, help='Random seed.')
+    parser.add_argument('--seed', type=int, default=10, help='Random seed.')
     parser.add_argument('--epochs', type=int, default=200,
                         help='Number of epochs to train.')
     parser.add_argument('--tuned', action='store_true', help='use tuned hyperparams')
@@ -19,22 +19,12 @@ def get_args():
     parser.add_argument('--dropout', type=float, default=0.5,
                         help='Dropout rate (1 - keep probability).')
     parser.add_argument('--dataset', type=str, default="Cora",
-                        help='Dataset to use.')
+                        help='Dataset to use.(Cora, Citeseer, Pubmed)')
     parser.add_argument('--model', type=str, default="GCN",
                         choices=["SGC", "GCN"],
                         help='model to use.')
-    parser.add_argument('--feature', type=str, default="mul",
-                        choices=['mul', 'cat', 'adj'],
-                        help='feature-type')
-    parser.add_argument('--normalization', type=str, default='AugNormAdj',
-                        choices=['AugNormAdj'],
-                        help='Normalization method for the adjacency matrix.')
     parser.add_argument('--degree', type=int, default=2,
                         help='degree of the approximation.')
-    parser.add_argument('--per', type=int, default=-1,
-                        help='Number of each nodes so as to balance.')
-    parser.add_argument('--experiment', type=str, default="base-experiment",
-                        help='feature-type')
 
     args, _ = parser.parse_known_args()
     args.cuda = not args.no_cuda and torch.cuda.is_available()

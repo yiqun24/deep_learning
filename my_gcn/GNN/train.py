@@ -1,14 +1,16 @@
 import torch
 import time
 import pickle as pkl
-from GNN.model import GCN, SGC
+from model import GCN, SGC
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 from utils import *
 from args import *
 
+# 如果同时安装了tensorflow造成错误，执行以下代码
 import tensorflow as tf
 import tensorboard as tb
+
 tf.io.gfile = tb.compat.tensorflow_stub.io.gfile
 
 
@@ -22,8 +24,6 @@ def train_gcn(features, labels, adj,
         model.cuda()
 
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
-    # optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9)
-    # optimizer = torch.optim.NAdam(model.parameters(), lr=lr, weight_decay=weight_decay)
 
     step = 0
     t_total = time.time()
@@ -54,15 +54,15 @@ def train_gcn(features, labels, adj,
         # writer.add_scalar("Loss/validation", loss_val, epoch)
         # writer.add_scalar("Accuracy/validation", acc_val, epoch)
 
-        # print(f'Epoch: {epoch + 1:04d}',
-        #         f'loss_train: {loss_train.item():.4f}',
-        #         f'acc_train: {acc_train.item():.4f}',
-        #         f'loss_val: {loss_val.item():.4f}',
-        #         f'acc_val: {acc_val.item():.4f}',
-        #         f'time: {time.time() - t0:.4f}')
+        print(f'Epoch: {epoch + 1:04d}',
+              f'loss_train: {loss_train.item():.4f}',
+              f'acc_train: {acc_train.item():.4f}',
+              f'loss_val: {loss_val.item():.4f}',
+              f'acc_val: {acc_val.item():.4f}',
+              f'time: {time.time() - t0:.4f}')
 
-    # print("Optimization Finished!")
-    # print(f"Total time elapsed: {time.time() - t_total:.4f}s")
+    print("Optimization Finished!")
+    print(f"Total time elapsed: {time.time() - t_total:.4f}s")
 
     return model, (loss_val, acc_val)
 
@@ -84,6 +84,7 @@ def train_sgc(model,
               train_features, train_labels,
               val_features, val_labels,
               lr, weight_decay, epochs):
+
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     t_total = time.time()
     for epoch in range(epochs):
@@ -120,7 +121,7 @@ def train_sgc(model,
     print("Optimization Finished!")
     print(f"Total time elapsed: {time.time() - t_total:.4f}s")
 
-    return model
+    return model, (loss_val, acc_val)
 
 
 def test_sgc(model, test_features, test_labels):
@@ -136,22 +137,19 @@ def test_sgc(model, test_features, test_labels):
 
 
 if __name__ == "__main__":
-    # Train model
     args = get_args()
-    # writer = SummaryWriter()
-    # set_seed(args.seed, args.cuda)
+    set_seed(args.seed, args.cuda)
 
-    args.tuned = True
+    # 用于追踪训练过程从而使用tensorboard进行可视化
+    # writer = SummaryWriter()
+
     if args.tuned:
-        if args.model == "GCN":
-            with open(f"../{args.model}-tuning/{args.dataset}.tune", 'rb') as f:
-                paras = pkl.load(f)
-                args.lr = paras['lr']
-                args.weight_decay = paras['weight_decay']
-                print(f"using tuned weight decay: {args.weight_decay} " +
-                      f"using tuned learning rate: {args.lr}")
-        else:
-            raise NotImplemented
+        with open(f"../{args.model}-tuning/{args.dataset}.tune", 'rb') as f:
+            paras = pkl.load(f)
+            args.lr = round(paras['lr'], 2)
+            args.weight_decay = paras['weight_decay']
+            print(f"using tuned weight decay: {args.weight_decay} " +
+                  f"using tuned learning rate: {args.lr}")
 
     adj, features, labels, train_mask, val_mask, test_mask = load_data(args.dataset, args.cuda)
 
@@ -164,9 +162,9 @@ if __name__ == "__main__":
     elif args.model == 'SGC':
         features = sgc_precompute(features, adj, args.degree)
         SGC_model = SGC(features.shape[1], labels.max().item() + 1)
-        trained_model = train_sgc(SGC_model, features[train_mask], labels[train_mask],
-                                  features[val_mask], labels[val_mask],
-                                  0.2, 1.3e-5, 200)
+        trained_model, _ = train_sgc(SGC_model, features[train_mask], labels[train_mask],
+                                     features[val_mask], labels[val_mask],
+                                     args.lr, args.weight_decay, args.epochs)
         test_sgc(trained_model, features[test_mask], labels[test_mask])
 
     # writer.flush()
